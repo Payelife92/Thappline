@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>แผนที่จุดตรวจสอบ Pipeline 4</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Tahoma", "Arial", sans-serif;
+      background: #f4f6f8;
+      color: #222;
+    }
+
+    .header {
+      padding: 16px 24px;
+      background: #005f7f;
+      color: white;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .header p {
+      margin: 6px 0 0;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      height: calc(100vh - 74px);
+    }
+
+    .sidebar {
+      background: white;
+      border-right: 1px solid #ddd;
+      overflow-y: auto;
+      padding: 16px;
+    }
+
+    .summary {
+      background: #eef7fb;
+      border-left: 5px solid #007fa8;
+      padding: 12px;
+      margin-bottom: 14px;
+      border-radius: 6px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .point-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 12px;
+      background: #fff;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .point-card:hover {
+      background: #f0f8fb;
+      border-color: #007fa8;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    .point-title {
+      font-weight: bold;
+      color: #005f7f;
+      margin-bottom: 6px;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .point-badge {
+      display: inline-block;
+      background: #005f7f;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      margin-right: 4px;
+    }
+
+    .point-detail {
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .map-area {
+      height: 100%;
+      width: 100%;
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+
+    .popup-title {
+      font-weight: bold;
+      color: #005f7f;
+      font-size: 15px;
+      margin-bottom: 6px;
+      line-height: 1.5;
+    }
+
+    .popup-content {
+      font-size: 13px;
+      line-height: 1.7;
+      max-width: 370px;
+    }
+
+    .popup-content a,
+    .map-link {
+      display: inline-block;
+      margin-top: 8px;
+      background: #007fa8;
+      color: white;
+      text-decoration: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 13px;
+    }
+
+    .popup-content a:hover,
+    .map-link:hover {
+      background: #005f7f;
+    }
+
+    .image-box {
+      margin-top: 10px;
+    }
+
+    .image-title {
+      font-size: 13px;
+      font-weight: bold;
+      margin: 8px 0 4px;
+      color: #333;
+    }
+
+    .popup-image {
+      width: 100%;
+      max-width: 350px;
+      max-height: 230px;
+      object-fit: contain;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      background: #fff;
+      display: block;
+    }
+
+    .card-image {
+      width: 100%;
+      max-height: 190px;
+      object-fit: contain;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      margin: 8px 0;
+      background: #fff;
+      display: block;
+    }
+
+    .image-link {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 12px;
+      color: #007fa8;
+      text-decoration: none;
+      background: none;
+      padding: 0;
+    }
+
+    .image-link:hover {
+      text-decoration: underline;
+      background: none;
+    }
+
+    .no-image {
+      font-size: 12px;
+      color: #999;
+      margin-top: 6px;
+    }
+
+    .leaflet-control-layers {
+      font-family: "Tahoma", "Arial", sans-serif;
+      font-size: 13px;
+      border-radius: 8px;
+    }
+
+    .leaflet-popup-content {
+      margin: 12px;
+    }
+
+    .marker-label {
+      background: #005f7f;
+      color: white;
+      border: 2px solid white;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      line-height: 28px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 14px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+    }
+
+    .legend {
+      background: white;
+      padding: 10px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .legend-title {
+      font-weight: bold;
+      color: #005f7f;
+      margin-bottom: 4px;
+    }
+
+    .small-note {
+      font-size: 12px;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .coord-text {
+      font-family: Consolas, monospace;
+      font-size: 12px;
+      color: #333;
+      word-break: break-all;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+
+      .sidebar {
+        height: 380px;
+        border-right: none;
+        border-bottom: 1px solid #ddd;
+      }
+
+      .map-area {
+        height: calc(100vh - 454px);
+      }
+
+      .header h1 {
+        font-size: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="header">
+    <h1>แผนที่จุดตรวจสอบ Pipeline 4</h1>
+    <p>แสดงตำแหน่งตามลำดับสำรวจใหม่ พร้อมพิกัด แผนผัง และแผนที่ดาวเทียม</p>
+  </div>
+
+  <div class="container">
+    <div class="sidebar">
+      <div class="summary">
+        <b>สรุปข้อมูล</b><br />
+        จำนวนจุดตรวจสอบทั้งหมด: <b>5 จุด</b><br />
+        การเรียงลำดับ: <b>ตามลำดับสำรวจใหม่</b><br />
+        Base Map: <b>ถนน / พื้นขาว / ดาวเทียม / ดาวเทียม + ชื่อสถานที่</b><br />
+        รูปภาพ: รองรับทั้ง <b>Local Path</b> และ <b>Online URL</b>
+      </div>
+
+      <div id="pointList"></div>
+    </div>
+
+    <div class="map-area">
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // =====================================================
+    // ข้อมูลจุดตรวจสอบ อัปเดตตามตารางล่าสุด
+    //
+    // surveyOrder = ลำดับสำรวจใหม่
+    // point       = จุดที่เดิม
+    //
+    // วิธีใส่รูป:
+    // 1) ไฟล์ในโฟลเดอร์:
+    //    imageUrl: "images/point1_plan.png"
+    //
+    // 2) ลิงก์ออนไลน์:
+    //    imageUrl: "https://your-domain.com/images/point1_plan.png"
+    //
+    // 3) หลายรูปต่อ 1 จุด:
+    //    เพิ่ม object ใน planImages ได้เลย
+    // =====================================================
+
+    const surveyPoints = [
+      {
+        surveyOrder: 1,
+        point: 2,
+        pipeline: "Pipeline 4 (ผ่านถนน)",
+        kp: "KP2+565 – KP-2+610",
+        latitude: 13.911578391555885,
+        longitude: 100.7008011926795,
+        length: "45 x 3.0 m",
+        depth: "2.2 – 2.3 m",
+        location: "ถนนแยกจากถนนกาญจนาภิเษก 9 กม. 32+950 เข้าสู่ทางหลวงพิเศษฉลองรัฐ",
+        surveyDate: "15 มิ.ย.69",
+        planImages: [
+          {
+            title: "แผนผังจุดตรวจ จุดที่ 2",
+            imageUrl: "images/point2_plan.png"
+          }
+        ]
+      },
+      {
+        surveyOrder: 2,
+        point: 3,
+        pipeline: "Pipeline 4 (ผ่านถนน)",
+        kp: "KP3+825",
+        latitude: 13.901580761962999,
+        longitude: 100.70080098685442,
+        length: "30 x 3.0 m",
+        depth: "2.0 m",
+        location: "ถนนฉลองรัฐเข้าสู่ถนนกาญจนาภิเษก 9",
+        surveyDate: "15 มิ.ย.69",
+        planImages: [
+          {
+            title: "แผนผังจุดตรวจ จุดที่ 3",
+            imageUrl: "images/point3_plan.png"
+          }
+        ]
+      },
+      {
+        surveyOrder: 3,
+        point: 1,
+        pipeline: "Pipeline 4 (ผ่านถนน)",
+        kp: "KP0+380 – KP0+484",
+        latitude: 13.929298970481884,
+        longitude: 100.70708641122998,
+        length: "104 x 3.0 m",
+        depth: "3.2 – 5.2 m",
+        location: "ถนนกาญจนาภิเษก 9 กม.30+850 สะพานข้ามคลองหวา",
+        surveyDate: "16 มิ.ย.69",
+        planImages: [
+          {
+            title: "แผนผังจุดตรวจ จุดที่ 1",
+            imageUrl: "images/point1_plan.png"
+          }
+        ]
+      },
+      {
+        surveyOrder: 4,
+        point: 4,
+        pipeline: "Pipeline 4 (ผ่านถนน)",
+        kp: "KP14+950 – KP-15+005",
+        latitude: 13.806780766249155,
+        longitude: 100.67896847274613,
+        length: "55 x 3.0 m",
+        depth: "4.0 – 4.5 m",
+        location: "ถนนกาญจนาภิเษก 9 กม.45+250 หน้ามูลนิธิสุขใจ",
+        surveyDate: "16 มิ.ย.69",
+        planImages: [
+          {
+            title: "แผนผังจุดตรวจ จุดที่ 4",
+            imageUrl: "images/point4_plan.png"
+          }
+        ]
+      },
+      {
+        surveyOrder: 5,
+        point: 5,
+        pipeline: "Pipeline 4 (ผ่านถนน)",
+        kp: "KP29+500 – KP29+555",
+        latitude: 13.729912528509955,
+        longitude: 100.7554748633458,
+        length: "55 x 3.0 m",
+        depth: "2.8 – 3.3 m",
+        location: "ถนนกาญจนาภิเษก 7 กม.12+350 ใกล้ ICD",
+        surveyDate: "17 มิ.ย.69",
+        planImages: [
+          {
+            title: "แผนผังจุดตรวจ จุดที่ 5",
+            imageUrl: "images/point5_plan.png"
+          }
+        ]
+      }
+    ];
+
+    // เรียงข้อมูลตามลำดับสำรวจ เผื่ออนาคตมีการสลับข้อมูล
+    surveyPoints.sort((a, b) => a.surveyOrder - b.surveyOrder);
+
+    // =====================================================
+    // ฟังก์ชันสร้าง HTML สำหรับรูปภาพ
+    // =====================================================
+
+    function createImageHtml(images, imageClass) {
+      if (!images || images.length === 0) {
+        return `<div class="no-image">ไม่มีภาพแนบ</div>`;
+      }
+
+      return images.map((img, index) => {
+        const imageTitle = img.title || "รูปภาพ " + (index + 1);
+
+        return `
+          <div class="image-box">
+            <div class="image-title">${imageTitle}</div>
+
+            <img
+              src="${img.imageUrl}"
+              alt="${imageTitle}"
+              class="${imageClass}"
+              loading="lazy"
+              onerror="
+                this.style.display='none';
+                this.nextElementSibling.innerHTML='ไม่สามารถแสดงภาพได้ กรุณาตรวจสอบลิงก์หรือ path ภาพ';
+              "
+            />
+
+            <div class="no-image"></div>
+
+            <a href="${img.imageUrl}" target="_blank" class="image-link">
+              เปิดรูปภาพต้นฉบับ
+            </a>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // =====================================================
+    // สร้างแผนที่หลัก
+    // =====================================================
+
+    const map = L.map("map", {
+      center: [13.85, 100.70],
+      zoom: 11,
+      zoomControl: true
+    });
+
+    // =====================================================
+    // Base Map Layers
+    // =====================================================
+
+    // 1) OpenStreetMap - แผนที่ถนน
+    const osmMap = L.tileLayer(
+      "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+      {
+        maxZoom: 20,
+        attribution: "&copy; OpenStreetMap contributors"
+      }
+    );
+
+    // 2) Carto Light - แผนที่พื้นขาว อ่านง่าย
+    const cartoLightMap = L.tileLayer(
+      "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+      {
+        maxZoom: 20,
+        attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
+      }
+    );
+
+    // 3) Esri World Imagery - ภาพดาวเทียม
+    const satelliteMap = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+      {
+        maxZoom: 20,
+        attribution: "Tiles &copy; Esri"
+      }
+    );
+
+    // 4) Esri Labels - ชื่อสถานที่ / ถนน / ขอบเขต
+    const labelMap = L.tileLayer(
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+      {
+        maxZoom: 20,
+        attribution: "Labels &copy; Esri"
+      }
+    );
+
+    // 5) Hybrid = Satellite + Label
+    const hybridMap = L.layerGroup([
+      satelliteMap,
+      labelMap
+    ]);
+
+    // ตั้งค่าเริ่มต้นเป็นภาพดาวเทียม + ชื่อสถานที่
+    hybridMap.addTo(map);
+
+    // ตัวเลือก Base Map
+    const baseMaps = {
+      "แผนที่ถนน OpenStreetMap": osmMap,
+      "แผนที่พื้นขาว Carto": cartoLightMap,
+      "ภาพดาวเทียม": satelliteMap,
+      "ภาพดาวเทียม + ชื่อสถานที่": hybridMap
+    };
+
+    // =====================================================
+    // Marker Layer
+    // =====================================================
+
+    const markerLayer = L.layerGroup().addTo(map);
+    const markers = [];
+    const bounds = [];
+
+    // =====================================================
+    // Custom Marker Icon แบบเลขลำดับสำรวจ
+    // =====================================================
+
+    function createNumberIcon(numberText) {
+      return L.divIcon({
+        className: "",
+        html: `<div class="marker-label">${numberText}</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -15]
+      });
+    }
+
+    // =====================================================
+    // สร้าง Marker และ Popup
+    // =====================================================
+
+    surveyPoints.forEach((item) => {
+      const googleMapUrl = `https://www.google.com/maps?q=${item.latitude},${item.longitude}`;
+      const popupImages = createImageHtml(item.planImages, "popup-image");
+
+      const marker = L.marker(
+        [item.latitude, item.longitude],
+        {
+          icon: createNumberIcon(item.surveyOrder),
+          title: `ลำดับสำรวจ ${item.surveyOrder} / จุดที่ ${item.point}`
+        }
+      ).addTo(markerLayer);
+
+      marker.bindPopup(`
+        <div class="popup-title">
+          ลำดับสำรวจ ${item.surveyOrder} / จุดที่ ${item.point}
+        </div>
+
+        <div class="popup-content">
+          <b>Pipeline:</b> ${item.pipeline}<br>
+          <b>KP:</b> ${item.kp}<br>
+          <b>วันที่สำรวจ:</b> ${item.surveyDate}<br>
+          <b>พิกัด:</b>
+          <div class="coord-text">${item.latitude}, ${item.longitude}</div>
+          <b>ความยาวสำรวจ:</b> ${item.length}<br>
+          <b>ความลึกท่อ:</b> ${item.depth}<br>
+          <b>สถานที่:</b> ${item.location}<br>
+
+          ${popupImages}
+
+          <a href="${googleMapUrl}" target="_blank">
+            เปิดตำแหน่งใน Google Maps
+          </a>
+        </div>
+      `);
+
+      markers.push(marker);
+      bounds.push([item.latitude, item.longitude]);
+    });
+
+    // Zoom ให้เห็นทุกจุด
+    if (bounds.length > 0) {
+      map.fitBounds(bounds, {
+        padding: [40, 40]
+      });
+    }
+
+    // =====================================================
+    // Layer Control
+    // =====================================================
+
+    const overlayMaps = {
+      "ตำแหน่งจุดตรวจสอบ": markerLayer
+    };
+
+    L.control.layers(baseMaps, overlayMaps, {
+      collapsed: false,
+      position: "topright"
+    }).addTo(map);
+
+    // =====================================================
+    // Legend
+    // =====================================================
+
+    const legend = L.control({
+      position: "bottomleft"
+    });
+
+    legend.onAdd = function () {
+      const div = L.DomUtil.create("div", "legend");
+
+      div.innerHTML = `
+        <div class="legend-title">คำอธิบายแผนที่</div>
+        <div><b>1–5</b> = ลำดับสำรวจใหม่</div>
+        <div>คลิก Marker เพื่อดูรายละเอียดและแผนผัง</div>
+        <div>สลับ Base Map ได้ที่มุมขวาบน</div>
+      `;
+
+      return div;
+    };
+
+    legend.addTo(map);
+
+    // =====================================================
+    // สร้างรายการ Card ด้านซ้าย
+    // =====================================================
+
+    const pointList = document.getElementById("pointList");
+
+    surveyPoints.forEach((item, index) => {
+      const card = document.createElement("div");
+      card.className = "point-card";
+
+      const cardImages = createImageHtml(item.planImages, "card-image");
+      const googleMapUrl = `https://www.google.com/maps?q=${item.latitude},${item.longitude}`;
+
+      card.innerHTML = `
+        <div class="point-title">
+          <span class="point-badge">ลำดับ ${item.surveyOrder}</span>
+          จุดที่ ${item.point}
+        </div>
+
+        ${cardImages}
+
+        <div class="point-detail">
+          <b>Pipeline:</b> ${item.pipeline}<br>
+          <b>KP:</b> ${item.kp}<br>
+          <b>วันที่สำรวจ:</b> ${item.surveyDate}<br>
+          <b>Lat:</b> ${item.latitude}<br>
+          <b>Long:</b> ${item.longitude}<br>
+          <b>ความยาว:</b> ${item.length}<br>
+          <b>ความลึกท่อ:</b> ${item.depth}<br>
+          <b>สถานที่:</b> ${item.location}<br>
+
+          <a href="${googleMapUrl}" target="_blank" class="map-link">
+            เปิด Google Maps
+          </a>
+
+          <div class="small-note">
+            คลิกที่การ์ดเพื่อซูมไปยังตำแหน่งบนแผนที่
+          </div>
+        </div>
+      `;
+
+      card.addEventListener("click", (event) => {
+        const tagName = event.target.tagName.toLowerCase();
+
+        // ถ้าคลิกลิงก์หรือรูปภาพ ไม่ต้องซูมแผนที่
+        if (tagName === "a" || tagName === "img") {
+          return;
+        }
+
+        map.setView([item.latitude, item.longitude], 17);
+        markers[index].openPopup();
+      });
+
+      pointList.appendChild(card);
+    });
+  </script>
+</body>
+</html>
